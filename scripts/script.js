@@ -1,9 +1,9 @@
 import * as func from "./functions.js";
 
 Promise.all([
-    d3.json("../data/nodes.json"), // Nodes data
-    d3.json("../data/links.json"), // Links data
-    d3.json("../data/switzerland.geojson"), // Swiss map GeoJSON
+    d3.json("/data/nodes.json"), // Nodes data
+    d3.json("/data/links.json"), // Links data
+    d3.json("/data/switzerland.geojson"), // Swiss map GeoJSON
 ]).then(([nodes, links, switzerland]) => {
 
     const svg = d3.select("svg").classed("svg-content-responsive", true);
