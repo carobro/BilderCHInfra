@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BilderCHInfra</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+
+  </head>
+<body>
+<h1> Bilder Schweizer Infrasturkturen</h1>
+<h3> - Kraftwerke - </h3>
+    <div class="slider-container">
+        <input type="range" id="slider" name="slider" list="values" step="25" value="0" />
+        <datalist id="values">
+          <option value="0" label="Netzwerk"></option>
+          <option value="25" label="Karte"></option>
+          <option value="50" label="Diagramm"></option>
+          <option value="75" label="Sichtbarkeit"></option>
+          <option value="100" label="Objektbilder"></option>
+        </datalist>
+        <div class="slider-labels">
+          <span>Netzwerk</span>
+          <span>Karte</span>
+          <span>Diagramm</span>
+          <span>Sichtbarkeit</span>
+          <span>Objektbilder</span>
+        </div>
+      </div>
+
+    <div class="tooltip" id="tooltip"></div>
+    <svg width="1200" height="900">
+        <g id="mapLayer"></g>
+        <g id="legendLayer"></g>
+    </svg>    
+
+    <svg id="barChart"></svg>
+   
+    <script type="module" src="scripts/script.js"></script>
+</body>
+</html>
