@@ -76,7 +76,8 @@ export function moveToMapCoordinates(nodeGroup, link, isMapView, svg2, mapLayer,
     nodeGroup.on("click", (event, d) => {
         zoomToNode(d, projection, svg, zoom, mapLayer, nodeGroup, legendBox, legendX, legendY, sichtLayer);
     });
-
+   
+    handleNodeHover(nodeGroup, svg, projection)
     // Disable dragging while in map view
     nodeGroup.call(d3.drag().on("start", null).on("drag", null).on("end", null));
     nodeGroup.style("opacity", 1);
@@ -84,6 +85,7 @@ export function moveToMapCoordinates(nodeGroup, link, isMapView, svg2, mapLayer,
  
 
 // Apply zoom transformation (if required for your zoom function)
+// Function to zoom to a specific node
 function zoomToNode(d, projection, svg, zoom, mapLayer, nodeGroup, legendBox, legendX, legendY, sichtLayer) {
     legendBox.transition().duration(1000).ease(d3.easeLinear).style("opacity", 0);
     if (d.Koordinaten) {
@@ -121,25 +123,9 @@ function zoomToNode(d, projection, svg, zoom, mapLayer, nodeGroup, legendBox, le
                 return d3.select(this).attr("transform"); // Keep "Thema" nodes in place
             });
 
-        // Remove any existing images
-        nodeGroup.selectAll("image").remove();
-
-        // Append the image only to the clicked node
-        const clickedNode = nodeGroup.filter(n => n === d);
-        if (d.URL) {
-            setTimeout(() => {
-            clickedNode.append("image")
-                .attr("x", -20)
-                .attr("y", -20)
-                .attr("width", 40)
-                .attr("height", 40)
-                .attr("href", d.URL);
-        }, 2000)}
-
         svg.transition().duration(2000).call(zoom.transform, transform);
     }
 }
-
 
 
 
@@ -352,4 +338,44 @@ export function showDiagramm(mapLayer, link, nodeGroup, legendBox, svg2, nodes, 
         .transition()
         .duration(1000)
         .style("opacity", 0); // Set opacity to 0.3 for non-"Thema" circles
+}
+
+// Function to handle image display on hover with callout lines
+function handleNodeHover(nodeGroup, svg, projection) {
+    nodeGroup.on("mouseover", function(event, d) {
+        if (d.URL) {
+            const svgWidth = +svg.attr("width");
+            const [lat, lon] = d.Koordinaten.split(", ").map(Number);
+            const [x, y] = projection([lon, lat]);
+            const imageX = svgWidth - 400;
+            const imageY = 10;
+
+            d3.select("#hover-image").remove(); // Remove existing image if any
+            d3.select("#hover-line").remove(); // Remove existing line if any
+
+             // Draw callout line from node to image
+             svg.append("line")
+             .attr("id", "hover-line")
+             .attr("x1", x)
+             .attr("y1", y)
+             .attr("x2", imageX + 200)
+             .attr("y2", imageY + 200)
+             .attr("stroke", "black")
+             .attr("stroke-width", 1)
+             .attr("stroke-dasharray", "4 2");
+            // Append image on the right
+            svg.append("image")
+                .attr("id", "hover-image")
+                .attr("x", imageX)
+                .attr("y", imageY)
+                .attr("width", 400)
+                .attr("height", 400)
+                .attr("href", d.URL);
+
+           
+        }
+    }).on("mouseout", function() {
+        d3.select("#hover-image").remove();
+        d3.select("#hover-line").remove();
+    });
 }

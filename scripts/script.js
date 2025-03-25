@@ -1,10 +1,20 @@
 import * as func from "./functions.js";
 
 Promise.all([
+    /*
+    d3.json("../data/nodes.json"),
+    d3.json("../data/links.json"),
+    d3.json("../data/switzerland.geojson"),
+    d3.json("../data/sichtbarkeit.geojson"),
+
+    
+    Promise.all([
+    */
     d3.json("../BilderCHInfra/data/nodes.json"),
     d3.json("../BilderCHInfra/data/links.json"),
     d3.json("../BilderCHInfra/data/switzerland.geojson"),
     d3.json("../BilderCHInfra/data/sichtbarkeit.geojson"),
+    
 ]).then(([nodes, links, switzerland, sichtbarkeit]) => {
     const svg = d3.select("svg");
     const width = window.innerWidth * 0.7;
