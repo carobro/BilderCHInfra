@@ -1,7 +1,9 @@
-Promise.all([
-    d3.json("nodes.json"), // Nodes data
-    d3.json("links.json"), // Links data
-    d3.json("switzerland.geojson") // Swiss map GeoJSON
+
+    Promise.all([
+        d3.json("../BilderCHInfra/data/nodes.json"),
+        d3.json("../BilderCHInfra/data/links.json"),
+        d3.json("../BilderCHInfra/data/switzerland.geojson"),
+        d3.json("../BilderCHInfra/data/sichtbarkeit.geojson")
 ]).then(([nodes, links, switzerland]) => {
     const svg = d3.select("svg"),
         width = +svg.attr("width"),
