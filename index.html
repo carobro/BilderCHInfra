@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BilderCHInfra</title>
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
+
+  </head>
+<body>
+    <div class="container">
+        <div class="header">Bilder Schweizer Infrastrukturen</div>
+        <div class="svg-container">
+            <svg viewBox="0 0 1200 700">
+                <g id="mapLayer"></g>
+                <g id="legendLayer"></g>
+                <g id="barChart"></g>
+            </svg>   
+            <div id="jsonTableContainer" class="json-table-container" style="display:none;">
+                <table id="jsonTable" class="json-table"></table>
+            </div>
+        </div>
+        <div class="info-container"><svg class="info-chart"></svg></div>
+        
+        <div class="slider-container">
+            <div class="timeslider-container">
+            <label>
+                <input type="checkbox" id="timeTravelCheckbox">
+                Aktiviere Zeitreise
+            </label>
+            <div class="timecontainer" id="timecontainer">
+                <div id="slider-range" class="slider-range"></div>
+                <span id="minValue"></span> - 
+                <span id="maxValue"></span>
+            </div>
+        </div>
+            <input type="range" id="slider" name="slider" list="values" step="25" value="0" />
+            <datalist id="values">
+                <option value="0" label="Netzwerk"></option>
+                <option value="25" label="Karte"></option>
+                <option value="50" label="Diagramm"></option>
+                <option value="75" label="Tabelle"></option>
+                <option value="100" label="Objektbilder"></option>
+            </datalist>
+            <div class="slider-labels">
+                <span>Netzwerk</span>
+                <span>Karte</span>
+                <span>Diagramm</span>
+                <span>Tabelle</span>
+                <span>Objektbilder</span>
+            </div>
+        </div>
+      </div>
+      <script>
+      </script>
+    <script type="module" src="scripts/script.js"></script>
+    <script type="module" src="scripts/infochart.js"></script>
+</body>
+</html>
