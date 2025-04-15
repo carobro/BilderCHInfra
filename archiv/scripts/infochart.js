@@ -41,19 +41,35 @@ function getData(sliderValue) {
             { x: "S", y: "-" },
             { x: "R", y: "++" }
         ];
-    } else if (sliderValue === 50) {
+    } else if (sliderValue === 25) {
         return [
             { x: "A", y: "+" },
             { x: "T", y: "+" },
             { x: "S", y: "++" },
             { x: "R", y: "-" }
         ];
-    } else if (sliderValue === 100) {
+    } else if (sliderValue === 50) {
+        return [
+            { x: "A", y: "+" },
+            { x: "T", y: "++" },
+            { x: "S", y: "-" },
+            { x: "R", y: "+" }
+        ];
+    }
+    else if (sliderValue === 75) {
         return [
             { x: "A", y: "++" },
             { x: "T", y: "-" },
             { x: "S", y: "-" },
             { x: "R", y: "+" }
+        ];
+    }
+    else if (sliderValue === 100) {
+        return [
+            { x: "A", y: "++" },
+            { x: "T", y: "++" },
+            { x: "S", y: "++" },
+            { x: "R", y: "++" }
         ];
     }
     return [];

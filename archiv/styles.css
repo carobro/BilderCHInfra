@@ -27,42 +27,14 @@ h1, h3 {
   height: 100vh;
 }
 
-
+/* Header Styling */
 .header {
   grid-area: header;
+  text-align: center;
   font-weight: bold;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  position: relative;
-  padding: 10px 20px;
   background-color: #f1f1f1;
+  padding: 10px;
 }
-
-.title-left {
-  flex: 0 0 auto;
-  text-align: left;
-}
-
-.mode-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.title-box {
-    background-color: #f0f0f0;  /* light grey background */
-    border: 1px solid #ccc;     /* subtle border */
-    padding: 8px 12px;
-    border-radius: 6px;
-    color: #333;                /* dark grey text */
-    font-size: 14px;
-    display: inline-block;
-}
-
 
 /* SVG Container */
 .svg-container {

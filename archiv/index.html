@@ -15,25 +15,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="title-left">
-                <div class="title-box">
-                    <p style="margin: 0; line-height: 1.3;">
-                        <span>Bilder</span><br>
-                        <span>Schweizer</span><br>
-                        <span>Infrastrukturen</span>
-                    </p>
-                </div>
-            </div>
-            
-            
-            <div class="mode-center">
-                <p id="mainModeLabel" style="font-size: 24px; font-weight: bold; margin: 0;">Netzwerk</p>
-                <p id="descriptionBox" style="font-size: 16px; color: #555; margin-top: 8px; max-width: 500px; text-align: center;">
-                    Visualisierung des Netzwerks von Infrastrukturen basierend auf Verbindungen.
-                </p>
-            </div>
+            <p style="font-size: 26px;">Bilder Schweizer Infrastrukturen</p>
+            <p style=" font-size: 18px;">Netzwerk</p>
         </div>
-        
         
         <div class="svg-container">
             <svg viewBox="0 0 1200 700">
@@ -62,13 +46,17 @@
             <input type="range" id="slider" name="slider" list="values" step="25" value="0" />
             <datalist id="values">
                 <option value="0" label="Netzwerk"></option>
-                <option value="50" label="Karte"></option>
-                <option value="100" label="Bubble"></option>
+                <option value="25" label="Karte"></option>
+                <option value="50" label="Diagramm"></option>
+                <option value="75" label="Tabelle"></option>
+                <option value="100" label="Objektbilder"></option>
             </datalist>
             <div class="slider-labels">
                 <span>Netzwerk</span>
                 <span>Karte</span>
-                <span>Bubble</span>
+                <span>Diagramm</span>
+                <span>Tabelle</span>
+                <span>Objektbilder</span>
             </div>
         </div>
       </div>

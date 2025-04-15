@@ -1,0 +1,382 @@
+export function ticked(link, nodeGroup) {
+    link.attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+    nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+}
+
+
+export function moveToMapCoordinates(nodeGroup, link, isMapView, svg2, mapLayer, legendBox, projection, legendX,
+    legendY, simulation, geojsonLayer, svg, sichtLayer, barchart, topicColorMap) {
+    if (barchart) {
+        link.style("opacity", 0);
+        nodeGroup.selectAll("rect").transition().delay(200).duration(200).style("opacity", 0);
+        nodeGroup.selectAll("rect").remove(); // Remove previous rectangles if present
+        nodeGroup.selectAll("circle").transition().delay(200).duration(200).style("opacity", 1);
+    } else {
+        link.transition().duration(1000).style("opacity", 0);
+    }
+
+    isMapView = true; // Map view is activated
+    simulation.stop();
+    svg2.transition().duration(3000).style("opacity", 0);
+
+    mapLayer.transition().delay(7000).duration(1000).style("opacity", 1);
+    legendBox.transition().delay(4000).duration(1000).style("opacity", 1);
+
+    const zoom = d3.zoom()
+        .scaleExtent([1, 10]) // Set the zoom range, e.g., from 1x to 10x zoom
+        .on("zoom", function (event) {
+            svg.select("g.map").attr("transform", event.transform); // Apply zoom transform to the map
+            svg.select("g.nodes").attr("transform", event.transform); // Apply zoom transform to the nodes
+        });
+    svg.call(zoom); // Apply the zoom behavior to the entire SVG
+
+    // Remove existing text before appending new text to avoid double text
+    nodeGroup.selectAll("text").remove();
+
+    // Append new text elements
+    nodeGroup.append("text")
+        .attr("dx", d => d.group === "thema" ? 20 : 12)
+        .attr("dy", ".35em")
+        .text(d => d.id)
+        .style("opacity", 0);
+
+    // Mouseover and mouseout events to control text visibility
+    nodeGroup.on("mouseover", function (event, d) {
+            d3.select(this).select("text").style("opacity", 1);
+        })
+        .on("mouseout", function (event, d) {
+            d3.select(this).select("text").style("opacity", 0);
+        });
+
+    // Apply transition for moving nodes
+    nodeGroup.transition().delay(1000).duration(4000)
+        .attr("transform", (d, i) => {
+            if (d.koordinaten) {
+                const [lat, lon] = d.koordinaten.split(", ").map(Number);
+                const [x, y] = projection([lon, lat]);
+                return `translate(${x},${y})`;
+            } else if (d.group === "thema") {
+                const x = legendX + 20;
+                const y = legendY + 30 + i * 35;
+                return `translate(${x},${y})`;
+            }
+            return "translate(-1000, -1000)";
+        })
+        .on("end", function () {
+            // Ensure text for "thema" group is visible after transition
+            nodeGroup.transition().delay(1000).selectAll("text").filter(function (d) {
+                return d.group === "thema";
+            }).style("opacity", 1);
+        });
+
+    // Zoom and pan the map + non-"thema" nodes together
+    nodeGroup.on("click", (event, d) => {
+        zoomToNode(d, projection, svg, zoom, mapLayer, nodeGroup, legendBox, legendX, legendY, sichtLayer);
+    });
+   
+    handleNodeHover(nodeGroup, svg, projection)
+    // Disable dragging while in map view
+    nodeGroup.call(d3.drag().on("start", null).on("drag", null).on("end", null));
+    nodeGroup.style("opacity", 1);
+}
+ 
+
+// Apply zoom transformation (if required for your zoom function)
+// Function to zoom to a specific node
+function zoomToNode(d, projection, svg, zoom, mapLayer, nodeGroup, legendBox, legendX, legendY, sichtLayer) {
+    legendBox.transition().duration(1000).ease(d3.easeLinear).style("opacity", 0);
+    if (d.koordinaten) {
+        const [lat, lon] = d.koordinaten.split(", ").map(Number);
+        const [x, y] = projection([lon, lat]); // Correct projection
+
+        // Get SVG dimensions
+        const width = +svg.attr("width");
+        const height = +svg.attr("height");
+        const scale = 5;
+
+        // Calculate translation to center the clicked node
+        const translateX = width / 2 - x * scale;
+        const translateY = height / 2 - y * scale;
+
+        // Create the zoom transform
+        const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+
+        // Apply zoom and translation to the mapLayer
+        mapLayer.transition().duration(2000)
+            .attr("transform", transform);
+
+        // Apply zoom and translation to the sichtbarLayer
+        sichtLayer.transition().delay(4000).duration(1000)
+           .style("opacity", 1).attr("transform", transform);
+
+        // Apply zoom only to the non-"thema" nodes
+        nodeGroup.transition().duration(2000)
+            .attr("transform", function(d, i) {
+                if (d.group !== "thema") {
+                    const [lat, lon] = d.koordinaten.split(", ").map(Number);
+                    const [x, y] = projection([lon, lat]);
+                    return `translate(${x},${y})`;
+                }
+                return d3.select(this).attr("transform"); // Keep "thema" nodes in place
+            });
+
+        svg.transition().duration(2000).call(zoom.transform, transform);
+    }
+}
+
+
+
+
+export function resetToInitialPositions(nodeGroup, isMapView, svg2, initialPositions, legendBox, mapLayer, link,
+    simulation) {
+    
+
+    //svg2.transition().duration(1000).style("opacity", 0);
+    isMapView = false;
+    nodeGroup.selectAll("circle").style("opacity", 1);
+    link.transition().delay(1000).duration(1000).ease(d3.easeLinear).style("opacity", 1);
+    nodeGroup.transition().delay(1000).duration(5000).selectAll("text").filter(function (d) {
+        return d.group === "thema";
+    }).style("opacity", 0);
+    nodeGroup.selectAll("rect").remove();
+    // Remove rectangles and restore circles
+    nodeGroup.selectAll("rect").transition().duration(1000).style("opacity", 0); // Fade out rectangles
+    nodeGroup.selectAll("circle").transition().duration(1000).style("opacity", 1);
+    
+    nodeGroup.transition().duration(4000)
+        .attr("transform", d => {
+            mapLayer.transition().duration(2000).ease(d3.easeLinear).style("opacity", 0);
+            const pos = initialPositions[d.id] || {
+                x: d.x,
+                y: d.y
+            };
+            return `translate(${pos.x},${pos.y})`;
+        })
+        .on("end", function () {
+            setTimeout(function () {
+                link.transition().duration(10)
+                    .attr("x1", d => {
+                        const sourcePos = initialPositions[d.source.id] || {
+                            x: d.source.x,
+                            y: d.source.y
+                        };
+                        return sourcePos.x;
+                    })
+                    .attr("y1", d => {
+                        const sourcePos = initialPositions[d.source.id] || {
+                            x: d.source.x,
+                            y: d.source.y
+                        };
+                        return sourcePos.y;
+                    })
+                    .attr("x2", d => {
+                        const targetPos = initialPositions[d.target.id] || {
+                            x: d.target.x,
+                            y: d.target.y
+                        };
+                        return targetPos.x;
+                    })
+                    .attr("y2", d => {
+                        const targetPos = initialPositions[d.target.id] || {
+                            x: d.target.x,
+                            y: d.target.y
+                        };
+                        return targetPos.y;
+                    })
+                    .style("opacity", 1);
+            }, 0);
+            legendBox.transition().duration(1000).ease(d3.easeLinear).style("opacity", 0);
+        }) .style("opacity", 1)
+
+
+                
+    nodeGroup.on("click", function (event, d) {
+        console.log(d.id);
+    });
+
+    console.log(simulation)
+    nodeGroup.call(d3.drag().on("start", (event, d) => func.dragstarted(event, d, simulation))
+        .on("drag", dragged)
+        .on("end", (event, d) => func.dragended(event, d, simulation)));
+}
+
+
+export function dragstarted(event, d, simulation) {
+    //if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+}
+
+export function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+}
+
+export function dragended(event, d, simulation) {
+    if (!event.active) {
+        //simulation.alphaTarget(0.3).restart();
+    }
+    d.fx = null;
+    d.fy = null;
+}
+
+export function showDiagramm(mapLayer, link, nodeGroup, legendBox, svg2, nodes, colorScale) {
+    // Hide map and network views
+    mapLayer.transition().duration(1000).ease(d3.easeLinear).style("opacity", 0);
+    link.transition().duration(1000).ease(d3.easeLinear).style("opacity", 0);
+    nodeGroup.transition().duration(1000).ease(d3.easeLinear).style("opacity", 0);
+    legendBox.transition().duration(1000).ease(d3.easeLinear).style("opacity", 0);
+
+
+    // Separate "thema" nodes and others
+    const themaNodes = nodes.filter(d => d.group === "thema");
+    const nonthemaNodes = nodes.filter(d => d.group !== "thema");
+
+    // Count the remaining nodes for the bars
+    const groupCounts = d3.rollup(nonthemaNodes, v => v.length, d => d.group);
+    const barData = Array.from(groupCounts, ([group, count]) => ({
+        group,
+        count
+    }));
+    const margin = {
+        top: 20,
+        right: 30,
+        bottom: 40,
+        left: 50
+    };
+
+    // Set up scales
+    const xScale = d3.scaleBand()
+        .domain(barData.map(d => d.group))
+        .range([margin.left, d3.select("#barChart").attr("width") - margin.right])
+        .padding(0.1);
+
+    const yScale = d3.scaleLinear()
+        .domain([0, d3.max(barData, d => d.count)]).nice()
+        .range([d3.select("#barChart").attr("height") - margin.bottom, margin.top]);
+
+    // Show bar chart axes
+    svg2.transition().duration(1000).style("opacity", 1);
+
+    svg2.append("g")
+        .attr("transform", `translate(0,${d3.select("#barChart").attr("height") - margin.bottom})`)
+        .call(d3.axisBottom(xScale))
+        .attr("class", "axis");
+
+    svg2.append("g")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(yScale))
+        .attr("class", "axis");
+
+    // Move and stack the non-"thema" nodes, transforming them into rectangles
+    const verticalOffset = 30; // Small vertical offset to stack nodes
+
+    // Group the non-"thema" nodes by their group
+    const groupedNodes = d3.groups(nonthemaNodes, d => d.group);
+
+    groupedNodes.forEach(([group, nodesInGroup], i) => {
+        nodeGroup
+            .filter(d => d.group === group) // Select only nodes of this group
+            .transition()
+            .duration(2000)
+            .attr("transform", function (d, j) {
+                // Get the x position based on the group
+                const x = (xScale(group) + xScale.bandwidth() / 2) - 15;
+                // Stack the nodes on the y-axis for each group, starting from the bottom
+                const chartHeight = d3.select("#barChart").attr("height");
+                const y = chartHeight - margin.bottom - (j * verticalOffset) - 30; // Stack from the bottom
+                return `translate(${x},${y})`;
+            })
+            .each(function (d, j) {
+                // Transform into rectangles with opacity 1
+                d3.select(this).append("rect")
+                    .attr("width", 30) // Set width
+                    .attr("height", 30) // Set height
+                    .attr("fill", d => colorScale[d.group])
+                    .attr("stroke-width", 1)
+                    .attr("stroke", "#999")
+                    .style("opacity",
+                        0)
+                   .transition().delay(2000).duration(200).style("opacity",
+                        1); // Dissolve circle
+                    
+            });
+            
+        nodeGroup.filter(d => d.group === group).selectAll("text").attr("dx", 35).attr("dy",
+            15) // Set opacity of circles to 0 for non-"thema" nodes
+    });
+
+    // Handle "thema" nodes separately, placing them just below the x-axis
+    nodeGroup
+        .filter(d => d.group === "thema")
+        .transition()
+        .duration(2000)
+        .attr("transform", d => {
+            const groupIndex = barData.findIndex(b => b.group === d.id); // Match bar by group ID
+            if (groupIndex !== -1) {
+                const x = xScale(barData[groupIndex].group) + xScale.bandwidth() / 2;
+                const y = d3.select("#barChart").attr("height") - margin.bottom +
+                    20; // Position just below the x-axis
+                return `translate(${x},${y})`;
+            }
+            return null; // Hide unmatched nodes
+        })
+        .on("end", function (event, d) {
+            nodeGroup.transition().delay(200).selectAll("text").filter(function (d) {
+                return d.group === "thema";
+            }).style("opacity", 1).attr("dx", -25);
+            d3.select(this).select("circle").transition().delay(200).duration(200).style("opacity",
+                0); // Dissolve circle
+        });
+
+    // Reduce opacity for non-"thema" circles
+    nodeGroup
+        .filter(d => d.group !== "thema")
+        .selectAll("circle")
+        .transition()
+        .duration(1000)
+        .style("opacity", 0); // Set opacity to 0.3 for non-"thema" circles
+}
+
+// Function to handle image display on hover with callout lines
+function handleNodeHover(nodeGroup, svg, projection) {
+    nodeGroup.on("mouseover", function(event, d) {
+        if (d.URL) {
+            const svgWidth = +svg.attr("width");
+            const [lat, lon] = d.koordinaten.split(", ").map(Number);
+            const [x, y] = projection([lon, lat]);
+            const imageX = svgWidth - 400;
+            const imageY = 10;
+
+            d3.select("#hover-image").remove(); // Remove existing image if any
+            d3.select("#hover-line").remove(); // Remove existing line if any
+
+             // Draw callout line from node to image
+             svg.append("line")
+             .attr("id", "hover-line")
+             .attr("x1", x)
+             .attr("y1", y)
+             .attr("x2", imageX + 200)
+             .attr("y2", imageY + 200)
+             .attr("stroke", "black")
+             .attr("stroke-width", 1)
+             .attr("stroke-dasharray", "4 2");
+            // Append image on the right
+            svg.append("image")
+                .attr("id", "hover-image")
+                .attr("x", imageX)
+                .attr("y", imageY)
+                .attr("width", 400)
+                .attr("height", 400)
+                .attr("href", d.URL);
+
+           
+        }
+    }).on("mouseout", function() {
+        d3.select("#hover-image").remove();
+        d3.select("#hover-line").remove();
+    });
+}
