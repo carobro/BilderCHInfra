@@ -1,10 +1,10 @@
 import * as func from "./functions.js";
 Promise.all([
 
-    d3.json("../data/nodes.json"),
-    d3.json("../data/links.json"),
-    d3.json("../data/switzerland.geojson"),
-    d3.json("../data/geom.geojson"),
+    d3.json("../BilderCHInfra/data/nodes.json"),
+    d3.json("../BilderCHInfra/data/links.json"),
+    d3.json("../BilderCHInfra/data/switzerland.geojson"),
+    d3.json("../BilderCHInfra/data/geom.geojson"),
 ]).then(([nodes, links, switzerland, geom]) => {
     // Merge geom geometry attribute to nodes based on gehoert_zu attribute
     nodes.forEach(node => {
