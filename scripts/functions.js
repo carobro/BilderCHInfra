@@ -1,10 +1,4 @@
-export function ticked(link, nodeGroup) {
-    link.attr("x1", d => d.source.x)
-        .attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x)
-        .attr("y2", d => d.target.y);
-    nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
-}
+import * as helper from "./helper.js";
 
 export function moveToMapCoordinates(nodeGroup, link, mapLayer, legendBox, projection, legendX,
     legendY, simulation, svg, topicColorMap) {
@@ -20,7 +14,7 @@ export function moveToMapCoordinates(nodeGroup, link, mapLayer, legendBox, proje
     nodeGroup.selectAll("circle")
         .transition().duration(1000)
         .attr("r", d => d.group === "thema" ? 15 : 10)
-        .style("fill", d => topicColorMap[d.group]) // Or whatever default color you use
+        .style("fill", d => topicColorMap[d.group])
         .style("opacity", 1);
 
     // Append new text elements
@@ -60,67 +54,66 @@ export function moveToMapCoordinates(nodeGroup, link, mapLayer, legendBox, proje
             }).style("opacity", 1);
         });
 
-        nodeGroup.each(function(d) {
-            if (d.geometry && d.geometry.type === "MultiLineString") {
+    nodeGroup.each(function(d) {
+        if (d.geometry && d.geometry.type === "MultiLineString") {
             const multilinestring = d.geometry.coordinates;
 
             multilinestring.forEach(line => {
                 // Apply the projection to each coordinate in the line
                 const pathData = line.map(coord => {
-                if (!Array.isArray(coord) || coord.length < 2) return ""; // Ensure valid coordinates
-                const [x, y] = projection([coord[0], coord[1]]); // [x, y] order for projection
-                return `${x},${y}`;
+                    if (!Array.isArray(coord) || coord.length < 2) return ""; // Ensure valid coordinates
+                    const [x, y] = projection([coord[0], coord[1]]); // [x, y] order for projection
+                    return `${x},${y}`;
                 }).filter(Boolean).join("L"); // Filter out invalid points
 
                 // Ensure pathData starts with M (move to the first point)
                 const pathString = `M${pathData}`;
                 // Append the path to SVG
                 svg.append("path")
-                .attr("d", pathString)
-                .attr("fill", "none")
-                .attr("stroke", "grey")
-                .attr("stroke-width", 1)
-                .attr("opacity", 0.7)
-                .style("opacity", 0) // Start with path invisible
-                .transition()
-                .delay(5000)  // Delay showing the geometry
-                .duration(1000)  // Duration for fading in
-                .style("opacity", 1);  // Fade in the path
+                    .attr("d", pathString)
+                    .attr("fill", "none")
+                    .attr("stroke", "grey")
+                    .attr("stroke-width", 1)
+                    .attr("opacity", 0.7)
+                    .style("opacity", 0) // Start with path invisible
+                    .transition()
+                    .delay(5000) // Delay showing the geometry
+                    .duration(1000) // Duration for fading in
+                    .style("opacity", 1); // Fade in the path
             });
-            }
-        });
+        }
+    });
 
-    handleNodeHover(nodeGroup, svg, projection);
+    helper.handleNodeHover(nodeGroup, svg, projection);
     // Disable dragging while in map view
     nodeGroup.call(d3.drag().on("start", null).on("drag", null).on("end", null));
     nodeGroup.style("opacity", 1);
 }
 
-export function resetToInitialPositions(nodeGroup, initialPositions, legendBox, mapLayer, link, simulation,svg) {
- svg.selectAll("path")
+export function resetToInitialPositions(nodeGroup, initialPositions, legendBox, mapLayer, link, simulation, svg) {
+    svg.selectAll("path")
         .transition()
-        .duration(1000) 
-        .style("opacity", 0)  
+        .duration(1000)
+        .style("opacity", 0)
         .on("end", function() {
             d3.select(this).remove();
         });
     nodeGroup.selectAll("circle").transition().duration(1000)
-    .attr("r", d => d.group === "thema" ? 15 : 10).style("opacity", 1);
+        .attr("r", d => d.group === "thema" ? 15 : 10).style("opacity", 1);
     link.transition().delay(3000).duration(1000).ease(d3.easeLinear).style("opacity", 1);
     nodeGroup.transition().delay(1000).duration(5000).selectAll("text").filter(function(d) {
         return d.group === "thema";
     }).style("opacity", 0);
 
-// Remove all labels from circle pack
-nodeGroup.selectAll("text").remove();
-
-nodeGroup.selectAll("circle")
-.on("mouseover", function(event, d) {
-    d3.select(this.parentNode).select("text").style("opacity", 1);
-})
-.on("mouseout", function(event, d) {
-    d3.select(this.parentNode).select("text").style("opacity", 0);
-});
+    // Remove all labels from circle pack
+    nodeGroup.selectAll("text").remove();
+    nodeGroup.selectAll("circle")
+        .on("mouseover", function(event, d) {
+            d3.select(this.parentNode).select("text").style("opacity", 1);
+        })
+        .on("mouseout", function(event, d) {
+            d3.select(this.parentNode).select("text").style("opacity", 0);
+        });
 
     nodeGroup.transition().duration(4000)
         .attr("transform", d => {
@@ -168,86 +161,27 @@ nodeGroup.selectAll("circle")
 
     mapLayer.transition().duration(2000).ease(d3.easeLinear).style("opacity", 0);
     nodeGroup.on("click", function(event, d) {});
-    nodeGroup.call(d3.drag().on("start", (event, d) => dragstarted(event, d, simulation))
-        .on("drag", dragged)
-        .on("end", (event, d) => dragended(event, d, simulation)));
-}
-
-export function dragstarted(event, d, simulation) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-}
-
-export function dragged(event, d) {
-    d.fx = event.x;
-    d.fy = event.y;
-}
-
-export function dragended(event, d, simulation) {
-    if (!event.active) {
-        simulation.alphaTarget(0.1).stop();
-    }
-    d.fx = null;
-    d.fy = null;
-}
-
-// Function to handle image display on hover with callout lines
-function handleNodeHover(nodeGroup, svg, projection) {
-    console.log(nodeGroup.selectAll("circle"));
-    nodeGroup.selectAll("circle").on("mouseover", function(event, d) {
-        if (d.url) {
-            const svgWidth = +svg.attr("width");
-            const [lat, lon] = d.koordinaten.split(", ").map(Number);
-            const [x, y] = projection([lon, lat]);
-            const imageX = svgWidth - 400;
-            const imageY = 10;
-
-            d3.select("#hover-image").remove(); // Remove existing image if any
-            d3.select("#hover-line").remove(); // Remove existing line if any
-
-            // Draw callout line from node to image
-            svg.append("line")
-                .attr("id", "hover-line")
-                .attr("x1", x)
-                .attr("y1", y)
-                .attr("x2", imageX + 200)
-                .attr("y2", imageY + 200)
-                .attr("stroke", "black")
-                .attr("stroke-width", 1)
-                .attr("stroke-dasharray", "4 2");
-            // Append image on the right
-            svg.append("image")
-                .attr("id", "hover-image")
-                .attr("x", imageX)
-                .attr("y", imageY)
-                .attr("width", 400)
-                .attr("height", 400)
-                .attr("href", d.url);
-        }
-    }).on("mouseout", function() {
-        d3.select("#hover-image").remove();
-        d3.select("#hover-line").remove();
-    });
+    nodeGroup.call(d3.drag().on("start", (event, d) => helper.dragstarted(event, d, simulation))
+        .on("drag", helper.dragged)
+        .on("end", (event, d) => helper.dragended(event, d, simulation)));
 }
 
 export function transformToCirclePack(nodesData, svg, nodeGroup, mapLayer, legendBox, link, projection) {
     svg.selectAll("path")
-    .transition()
-    .duration(1000) 
-    .style("opacity", 0)  
-    .on("end", function() {
-        d3.select(this).remove();
-    });
+        .transition()
+        .duration(1000)
+        .style("opacity", 0)
+        .on("end", function() {
+            d3.select(this).remove();
+        });
     // Hide map view & legend
     nodeGroup.selectAll("circle").style("opacity", 1);
     link.transition().duration(1000).style("opacity", 0);
     mapLayer.transition().duration(2000).ease(d3.easeLinear).style("opacity", 0);
     legendBox.transition().duration(1000).ease(d3.easeLinear).style("opacity", 0);
-
     // Disable hover behavior
     //nodeGroup.on("mouseover", null).on("mouseout", null);
-        
+
     const rootNodes = nodesData.filter(d => d.group === "thema");
     const rootData = {
         name: "root",
@@ -262,7 +196,7 @@ export function transformToCirclePack(nodesData, svg, nodeGroup, mapLayer, legen
         })
     };
 
-    // Step 3: Create hierarchy and apply pack layout
+    // Create hierarchy and apply pack layout
     const root = d3.hierarchy(rootData)
         .sum(d => d.children ? 1 : 10)
         .sort((a, b) => b.value - a.value);
@@ -271,7 +205,7 @@ export function transformToCirclePack(nodesData, svg, nodeGroup, mapLayer, legen
         .size([svg.attr("width") / 1.5, svg.attr("height") / 1.5])
         .padding(1);
 
-    packLayout(root);    
+    packLayout(root);
     nodeGroup.transition()
         .duration(2000)
         .attr("transform", function(d) {
@@ -279,7 +213,7 @@ export function transformToCirclePack(nodesData, svg, nodeGroup, mapLayer, legen
             return target ? `translate(${target.x},${target.y})` : "translate(-1000,-1000)";
         });
 
-    // Step 5: Style & resize all circles
+    // Style & resize all circles
     nodeGroup.selectAll("circle")
         .transition()
         .duration(2000)
@@ -304,11 +238,6 @@ export function transformToCirclePack(nodesData, svg, nodeGroup, mapLayer, legen
             return target ? 0.3 : 1;
         })
 
-    // Remove any previous labels
-    //nodeGroup.selectAll("text").remove();
-
-    // Filter only nodes with group === "thema"
-
     // Map node IDs to their computed radius from the packed layout
     const radiusMap = new Map(
         root.descendants().map(d => [d.data.id, d.r])
@@ -326,7 +255,7 @@ export function transformToCirclePack(nodesData, svg, nodeGroup, mapLayer, legen
         .style("font-weight", "bold")
         .style("opacity", 1);
 
-        nodeGroup.filter(d => d.group !== "thema")
+    nodeGroup.filter(d => d.group !== "thema")
         .attr("dy", "20em")
         .on("mouseover", function(event, d) {
             console.log(event, d)
@@ -335,5 +264,4 @@ export function transformToCirclePack(nodesData, svg, nodeGroup, mapLayer, legen
         .on("mouseout", function(event, d) {
             d3.select(this).select("text").style("opacity", 0);
         });
-
 }

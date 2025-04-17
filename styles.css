@@ -27,7 +27,6 @@ h1, h3 {
   height: 100vh;
 }
 
-
 .header {
   grid-area: header;
   font-weight: bold;
@@ -54,15 +53,14 @@ h1, h3 {
 }
 
 .title-box {
-    background-color: #f0f0f0;  /* light grey background */
-    border: 1px solid #ccc;     /* subtle border */
-    padding: 8px 12px;
-    border-radius: 6px;
-    color: #333;                /* dark grey text */
-    font-size: 14px;
-    display: inline-block;
+  background-color: #f0f0f0; /* light grey background */
+  border: 1px solid #ccc; /* subtle border */
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #333; /* dark grey text */
+  font-size: 14px;
+  display: inline-block;
 }
-
 
 /* SVG Container */
 .svg-container {
@@ -106,20 +104,20 @@ svg {
   position: relative;
 }
 
-/* Slider Container */
 .slider-container {
   grid-area: slider;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: center; /* centers content horizontally */
+  justify-content: center; /* centers content vertically */
   padding: 20px;
   background-color: #f1f1f1;
   width: 100%;
+  height: 100%;
 }
 
 /* Slider */
-input[type="range"], .slider-range {
+input[type="range"]{
   width: 100%;
   max-width: 600px;
   margin: 0;
@@ -136,7 +134,46 @@ input[type="range"], .slider-range {
   text-align: center;
 }
 
+/* Ensures slider and knobs display properly */
+#slider-range {
+  width: 100%;
+  height: 2px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  position: relative;
+  justify-content: center;
+  margin: 10px 0;
+}
 
+.ui-slider-handle {
+  top: -6px !important;
+  width: 12px !important;
+  height: 12px !important;
+  background: #007bff !important;
+  border-radius: 50% !important;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  max-width: 600;
+}
+
+.ui-slider-handle:hover {
+  background: #0056b3 !important;
+}
+
+#minValue, #maxValue {
+  position: absolute;
+  top: 20px; /* Ensure text appears right above the slider */
+  font-size: 12px;
+}
+
+#minValue {
+  left: 0; /* Align min value to the left side */
+}
+
+#maxValue {
+  right: 0; /* Align max value to the right side */
+}
 
 /* Tooltip Styling */
 .tooltip {
@@ -179,10 +216,9 @@ input[type="range"], .slider-range {
   height: auto;
 }
 
-
 .json-table-container {
   position: absolute; /* Aligns over the SVG */
-align-items: left;
+  align-items: left;
   background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
   z-index: 10; /* Ensures it overlays the SVG */
   overflow-y: auto;
@@ -207,15 +243,19 @@ align-items: left;
 }
 
 .timecontainer {
-  display: none; /* Slider verstecken standardmäßig */
-  margin-left: 20px;
+  display: none;
+  justify-content: center; /* Horizontally center */
+  align-items: center; /* Vertically center */
+  width: 100%;
+  position: relative;
+  padding-bottom: 20px;
 }
-
 
 .timeslider-container {
-  display: flex; /* Slider verstecken standardmäßig */
-}
-
-.slider-range{
-  width:100%
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centers slider block horizontally */
+  width: 60%; /* slider takes up 60% of the parent */
+  max-width: 600px;
+  min-width: 300px;
 }

@@ -2,7 +2,6 @@
 const container = document.querySelector(".info-chart");
 const containerWidth = container.clientWidth;
 const containerHeight = container.clientHeight;
-
 const margin = { top: 40, right: 20, bottom: 40, left: 50 };
 const width = containerWidth - margin.left - margin.right;
 const height = containerHeight - margin.top - margin.bottom;
@@ -29,8 +28,6 @@ const yScale = d3.scalePoint()
 
 const yAxis = d3.axisLeft(yScale)
     .tickFormat(d => d); // Default tick format for y-axis
-
-
 
 // Function to get data based on slider value
 function getData(sliderValue) {
@@ -143,7 +140,6 @@ function updateChart(sliderValue) {
 
     yAxisLabels.exit().remove();
 
-    
     xAxisLabels.enter()
         .append("text")
         .attr("class", "x-axis-label")

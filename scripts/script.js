@@ -1,6 +1,6 @@
 import * as func from "./functions.js";
+import * as helper from "./helper.js";
 Promise.all([
-
     d3.json("../BilderCHInfra/data/nodes.json"),
     d3.json("../BilderCHInfra/data/links.json"),
     d3.json("../BilderCHInfra/data/switzerland.geojson"),
@@ -41,7 +41,7 @@ Promise.all([
         if (d.group !== "thema") {
             const base = topicColorMap[d.group];
             if (base) {
-                const lighter = base.brighter(1); // you can adjust brightness level
+                const lighter = base.brighter(1); 
                 //console.log(base, lighter)
                 d.color = lighter.formatHex();
             }
@@ -82,24 +82,43 @@ Promise.all([
     });
 
     $(function() {
-        $("#slider-range").slider({
-            range: true,
-            min: minYear,
-            max: 2025,
-            values: [minYear, 2025],
-            slide: function(event, ui) {
-                // Update the displayed min and max values
-                $("#minValue").text(ui.values[0]);
-                $("#maxValue").text(ui.values[1]);
-
-                // Update node styles based on the new slider range
-                updateNodeStyles(ui.values[0], ui.values[1]);
-            }
+        const minYear = d3.min(nodes, d => {
+            const year = parseInt(d.von);
+            return isNaN(year) ? Infinity : year;
         });
-        // Initialize the min and max values when the page loads
-        $("#minValue").text($("#slider-range").slider("values", 0));
-        $("#maxValue").text($("#slider-range").slider("values", 1));
+    
+        const debounce = (func, wait) => {
+            let timeout;
+            return function (...args) {
+              clearTimeout(timeout);
+              timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+          };
+          
+          const debouncedUpdate = debounce(updateNodeStyles, 10);
+          
+          $("#slider-range").slider({
+            range: true,
+            min: 1930,
+            max: 2025,
+            values: [1930, 2025],
+            slide: function(event, ui) {
+              $("#minValue").text(ui.values[0]);
+              $("#maxValue").text(ui.values[1]);
+          
+              debouncedUpdate(ui.values[0], ui.values[1]);
+            }
+          });
+          
+          // Set initial text
+          $("#minValue").text($("#slider-range").slider("values", 0));
+          $("#maxValue").text($("#slider-range").slider("values", 1));
+          
+    
+        $("#minValue").text(minYear);
+        $("#maxValue").text(2025);
     });
+
 
     const timeslider = document.getElementById("timeTravelCheckbox");
     const sliderContainer = document.getElementById('timecontainer');
@@ -127,7 +146,6 @@ Promise.all([
             } else {
                 d3.select(this).style("opacity", 1).style("filter", "none");
             }
-
             if (nodeChanged) {
                 affectedNodes.add(d.id);
             }
@@ -192,9 +210,9 @@ Promise.all([
         .append("g")
         .attr("class", "node")
         .call(d3.drag()
-            .on("start", func.dragstarted)
-            .on("drag", func.dragged)
-            .on("end", func.dragended));
+            .on("start", helper.dragstarted)
+            .on("drag", helper.dragged)
+            .on("end", helper.dragended));
 
     nodeGroup.append("circle")
         .attr("r", d => d.group === "thema" ? 15 : 10)
@@ -212,7 +230,7 @@ Promise.all([
         .force("charge", d3.forceManyBody().strength(-50))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .on("tick", function() {
-            func.ticked(link, nodeGroup);
+            helper.ticked(link, nodeGroup);
         })
         .on("end", () => {
             nodes.forEach(d => {
@@ -272,7 +290,4 @@ Promise.all([
                 descriptionBox.textContent = "Eine Zwischenansicht – bitte schieben Sie den Regler auf einen festen Punkt.";
             }
         });
-        
-
-
 }).catch(error => console.error(error));
