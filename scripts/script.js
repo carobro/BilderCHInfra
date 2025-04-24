@@ -1,10 +1,10 @@
 import * as func from "./functions.js";
 import * as helper from "./helper.js";
 Promise.all([
-    d3.json("../BilderCHInfra/data/nodes.json"),
-    d3.json("../BilderCHInfra/data/links.json"),
-    d3.json("../BilderCHInfra/data/switzerland.geojson"),
-    d3.json("../BilderCHInfra/data/geom.geojson"),
+    d3.json("./data/nodes.json"),
+    d3.json("./data/links.json"),
+    d3.json("./data/switzerland.geojson"),
+    d3.json("./data/geom.geojson"),
 ]).then(([nodes, links, switzerland, geom]) => {
     // Merge geom geometry attribute to nodes based on gehoert_zu attribute
     nodes.forEach(node => {
@@ -12,9 +12,12 @@ Promise.all([
         node.geometry = matchingGeom ? matchingGeom.geometry : null;
     });
     const svg = d3.select("svg");
-    const width = window.innerWidth * 0.7;
-    const height = window.innerHeight * 0.7;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
     svg.attr("width", width).attr("height", height);
+    svg.attr("preserveAspectRatio", "xMidYMid meet")
+    .attr("viewBox", `0 0 ${width} ${height}`);
     let initialPositions = {};
     // Extract unique groups (topics)
     const groups = Array.from(new Set(nodes.map(d => d.group)));
@@ -67,7 +70,7 @@ Promise.all([
         const centerY = (y0 + y1) / 2;
 
         projection.center([centerX, centerY])
-            .translate([width / 2, height / 2]);
+            .translate([width/2, height/2]);
 
         return {
             projection,
@@ -76,7 +79,6 @@ Promise.all([
     }
 
     const minYear = d3.min(nodes, d => {
-        // Ensure that the "von" field is a valid number
         const year = parseInt(d.von);
         return isNaN(year) ? Infinity : year;
     });
@@ -150,12 +152,14 @@ Promise.all([
                 affectedNodes.add(d.id);
             }
         });
-        // Update the transparency of links based on affected nodes
-        d3.selectAll("line").each(function(link) {
-            if (affectedNodes.has(link.source.id) || affectedNodes.has(link.target.id)) {
-                d3.select(this).style("opacity", 0.1); // Make affected lines semi-transparent
-            } else {
-                d3.select(this).style("opacity", 1); // Restore full opacity for unaffected lines
+        d3.selectAll("line").each(function() {
+            const link = d3.select(this).datum(); // safely get the bound data
+            if (link?.source?.id && link?.target?.id) {
+                if (affectedNodes.has(link.source.id) || affectedNodes.has(link.target.id)) {
+                    d3.select(this).style("opacity", 0.1);
+                } else {
+                    d3.select(this).style("opacity", 1);
+                }
             }
         });
     }
@@ -209,15 +213,14 @@ Promise.all([
         .enter()
         .append("g")
         .attr("class", "node")
-        .call(d3.drag()
-            .on("start", helper.dragstarted)
-            .on("drag", helper.dragged)
-            .on("end", helper.dragended));
 
     nodeGroup.append("circle")
         .attr("r", d => d.group === "thema" ? 15 : 10)
         .attr("fill", d => d.thema && topicColorMap[d.thema] ? topicColorMap[d.thema] : d.color);
 
+        let isCirclePackActive = false;
+
+        let selectedNode = null;
     nodeGroup.on("mouseover", function() {
             d3.select(this).select("text").style("opacity", 1);
         })
@@ -225,13 +228,57 @@ Promise.all([
             d3.select(this).select("text").style("opacity", 0);
         });
 
+        nodeGroup.on("click", function(event, d) {
+            nodeGroup.select("circle")
+                .style("stroke", null)
+                .style("stroke-width", null);
+        
+            if (!isCirclePackActive) {
+            d3.selectAll(".link")
+                .style("stroke", "#999")
+                .style("stroke-width", 2)
+                .style("opacity", 1);
+            }
+        
+            if (selectedNode === d) {
+                selectedNode = null;
+            } else {
+                d3.select(this).select("circle")
+                    .style("stroke", "yellow")
+                    .style("stroke-width", 4);
+                selectedNode = d;
+        
+                if (!isCirclePackActive) {
+                    console.log("OLA")
+                    console.log(isCirclePackActive)
+
+                    d3.selectAll(".link")
+                        .style("opacity", link => {
+                            return (link.source.id === d.id || link.target.id === d.id) ? 1 : 0.2;
+                        })
+                        .style("stroke", link => {
+                            return (link.source.id === d.id || link.target.id === d.id) ? "yellow" : "#999";
+                        })
+                        .style("stroke-width", link => {
+                            return (link.source.id === d.id || link.target.id === d.id) ? 3 : 2;
+                        });
+                }
+            }
+        
+            event.stopPropagation();
+        });
+        
+        
+        
+
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(100))
         .force("charge", d3.forceManyBody().strength(-50))
-        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("center", d3.forceCenter(width/2, height/2))
         .on("tick", function() {
-            helper.ticked(link, nodeGroup);
+            helper.ticked(link, nodeGroup, width, height);
         })
+        
         .on("end", () => {
             nodes.forEach(d => {
                 initialPositions[d.id] = {
@@ -241,6 +288,7 @@ Promise.all([
             });
         });
 
+        nodeGroup.call(helper.drag(simulation));
     nodeGroup.attr("transform", d => {
         const pos = initialPositions[d.id] || {
             x: d.x,
@@ -274,16 +322,19 @@ Promise.all([
             const descriptionBox = document.getElementById("descriptionBox");
         
             if (value === 0) {
-                func.resetToInitialPositions(nodeGroup, initialPositions, legendBox, mapLayer, link, simulation, svg);
+                func.resetToInitialPositions(nodeGroup, initialPositions, legendBox, mapLayer, link, simulation, svg, selectedNode);
                 label.textContent = "Netzwerk";
+                isCirclePackActive=false
                 descriptionBox.textContent = "Visualisierung des Netzwerks von Infrastrukturen basierend auf Verbindungen.";
             } else if (value === 50) {
                 func.moveToMapCoordinates(nodeGroup, link, mapLayer, legendBox, projection, legendX, legendY, simulation, svg, topicColorMap);
                 label.textContent = "Karte";
+                isCirclePackActive=true
                 descriptionBox.textContent = "Geografische Darstellung der Infrastrukturen auf der Karte der Schweiz.";
             } else if (value === 100) {
                 func.transformToCirclePack(nodes, svg, nodeGroup, mapLayer, legendBox, link, projection);
                 label.textContent = "Bubble";
+                isCirclePackActive=true
                 descriptionBox.textContent = "Clustering der Infrastrukturen nach Themen in einer Bubble-Darstellung.";
             } else {
                 label.textContent = "Modus in Transition";

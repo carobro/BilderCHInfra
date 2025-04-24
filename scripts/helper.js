@@ -1,20 +1,27 @@
-export function dragstarted(event, d, simulation) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-}
-
-export function dragged(event, d) {
-    d.fx = event.x;
-    d.fy = event.y;
-}
-
-export function dragended(event, d, simulation) {
-    if (!event.active) {
-        simulation.alphaTarget(0.1).stop();
+export function drag(simulation) {
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
     }
-    d.fx = null;
-    d.fy = null;
+
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+        if (!event.active) {
+            simulation.alphaTarget(0);
+               }
+        d.fx = null;
+        d.fy = null;
+    }
+
+    return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
 }
 
 // Function to handle image display on hover with callout lines
@@ -56,10 +63,18 @@ export function handleNodeHover(nodeGroup, svg, projection) {
     });
 }
 
-export function ticked(link, nodeGroup) {
-    link.attr("x1", d => d.source.x)
+export function ticked(linkSelection, nodeSelection, width, height, radius = 10) {
+    linkSelection
+        .attr("x1", d => d.source.x)
         .attr("y1", d => d.source.y)
         .attr("x2", d => d.target.x)
         .attr("y2", d => d.target.y);
-    nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+
+    nodeSelection
+        .attr("transform", d => {
+            // Clamp x and y to stay within bounds, taking radius into account
+            d.x = Math.max(radius, Math.min(width - radius, d.x));
+            d.y = Math.max(radius, Math.min(height - radius, d.y));
+            return `translate(${d.x},${d.y})`;
+        });
 }

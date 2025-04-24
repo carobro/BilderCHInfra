@@ -24,6 +24,7 @@
   { "source": "Kraftwerke", "target": "Geothermiekraftwerk Riehen", "type": "Belongs to" },
   { "source": "Kraftwerke", "target": "Kraftwerk Chavalon de Vouvry", "type": "Belongs to" },
   { "source": "Kraftwerke", "target": "Wasserkraftwerk Rüchlig", "type": "Belongs to" },
+  { "source": "Kraftwerke", "target": "Kernkraftwerk Leibstadt", "type": "Belongs to" },
   { "source": "Reaktoren", "target": "Kernkraftwerk Beznau I", "type": "Belongs to" },
   { "source": "Reaktoren", "target": "Kernkraftwerk Beznau II", "type": "Belongs to" },
   { "source": "Raffinerien", "target": "Raffinerie Collombey", "type": "Belongs to" },
